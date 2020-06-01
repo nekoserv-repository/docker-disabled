@@ -14,6 +14,7 @@ services:
     container_name: main-services-disabled
     depends_on:
       - headphones
+      - nginx-static-index
       - rutorrent
       - rutorrent-fpm
       - sickchill
@@ -47,6 +48,33 @@ headphones:
       - "traefik.http.routers.headphones.tls=true"
       - "traefik.http.routers.headphones.middlewares=global-auth@file"
       - "traefik.http.routers.headphones.tls.certresolver=default-ssl"
+
+
+  nginx-static-index:
+    build:
+      context: dockerfiles/nginx-static-index
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: nginx-static-index
+    networks:
+      - private0
+    expose:
+      - "18080"
+    restart: unless-stopped
+    environment:
+      - TZ=$ENV_TIMEZONE
+    tmpfs:
+      - /tmp
+    volumes:
+      - ~/docker-data/nginx-static-index/static:/home/nginx/static
+    read_only: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nginx-static-index.rule=Host(`$ENV_DOMAIN`) && PathPrefix(`/`)"
+      - "traefik.http.routers.nginx-static-index.tls=true"
+      - "traefik.http.routers.nginx-static-index.middlewares=global-auth@file"
+      - "traefik.http.routers.nginx-static-index.tls.certresolver=default-ssl"
 
 
   rutorrent:
