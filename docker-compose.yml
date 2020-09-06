@@ -13,6 +13,7 @@ services:
     image: hello-world
     container_name: main-services-disabled
     depends_on:
+      - couchpotato
       - headphones
       - nginx-static-index
       - rutorrent
@@ -20,7 +21,37 @@ services:
       - sickchill
 
 
-headphones:
+  couchpotato:
+    build:
+      context: dockerfiles/couchpotato
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: couchpotato
+    networks:
+      - private0
+    expose:
+      - "5050"
+    restart: unless-stopped
+    environment:
+      - TZ=$ENV_TIMEZONE
+    tmpfs:
+      - /tmp
+    volumes:
+      - ~/docker-data/couchpotato/data:/home/couchpotato/data
+      - ~/Downloads/incomplete:/home/incomplete
+      - ~/Downloads/postprocessing:/home/postprocessing
+      - /mnt/nas/FILMS:/home/couchpotato/dl
+    read_only: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.couchpotato.rule=Host(`$ENV_DOMAIN`) && PathPrefix(`/couchpotato`)"
+      - "traefik.http.routers.couchpotato.tls=true"
+      - "traefik.http.routers.couchpotato.middlewares=global-auth@file"
+      - "traefik.http.routers.couchpotato.tls.certresolver=default-ssl"
+
+
+  headphones:
     build:
       context: dockerfiles/headphones
       args:
