@@ -183,3 +183,29 @@ services:
       - "traefik.http.routers.sickchill.tls=true"
       - "traefik.http.routers.sickchill.middlewares=global-auth@file"
       - "traefik.http.routers.sickchill.tls.certresolver=default-ssl"
+
+  transmission:
+    build:
+      context: dockerfiles/transmission
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: transmission
+    restart: unless-stopped
+    depends_on:
+      - openvpn-client
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    network_mode: service:openvpn-client
+    environment:
+      - TZ=$ENV_TIMEZONE
+    tmpfs:
+      - /tmp
+    volumes:
+      - ~/docker-data/transmission/:/home/tbt/.config/transmission-daemon/
+      - ~/docker-data/nzbToMedia:/home/rtorrent/nzbToMedia
+      - /mnt/nas/share:/home/rtorrent/share
+      - ~/docker-data/dl/incomplete/torrent:/home/incomplete
+      - ~/docker-data/dl/postprocessing:/home/postprocessing
+    stdin_open: true
+    tty: true
